@@ -6,6 +6,8 @@
 #include <ncurses.h>
 
 #define MAX_INPUT 100
+#define LOG_FILE "confidence_log.txt"
+#define RESULT_FILE "confidence_result.txt"
 
 typedef enum {
     WAVE3 = 25,
@@ -20,6 +22,14 @@ typedef struct {
     double score;
     char strategy[MAX_INPUT];
 } ConfidenceResult;
+
+void log_message(const char* message) {
+    FILE* log_file = fopen(LOG_FILE, "a");
+    if (log_file) {
+        fprintf(log_file, "%s\n", message);
+        fclose(log_file);
+    }
+}
 
 void to_lowercase(char* str) {
     for (int i = 0; str[i]; i++) str[i] = tolower(str[i]);
@@ -103,6 +113,17 @@ ConfidenceResult evaluate_confidence(
     return result;
 }
 
+void save_result(const ConfidenceResult* res) {
+    FILE* f = fopen(RESULT_FILE, "w");
+    if (f) {
+        fprintf(f, "Strategy: %s\nConfidence Score: %.2f%%\n", res->strategy, res->score);
+        fclose(f);
+        log_message("Result saved successfully.");
+    } else {
+        log_message("Failed to save result.");
+    }
+}
+
 void run_interface() {
     initscr();
     cbreak();
@@ -112,6 +133,8 @@ void run_interface() {
     char wave[MAX_INPUT], bb[MAX_INPUT], strat[MAX_INPUT];
     bool trend, macd, vol, bb_touch, vol_at_bb;
     bool run_again = true;
+
+    log_message("Application started.");
 
     while (run_again) {
         WaveScore wave_score;
@@ -140,7 +163,6 @@ void run_interface() {
         vol_at_bb = get_bool("Volume increased at BB touch? (true/false):");
 
         get_input(strat, "Strategy name:", MAX_INPUT);
-        trim_whitespace(strat);
         if (strlen(strat) == 0) strcpy(strat, "MACD");
         to_uppercase(strat);
 
@@ -155,18 +177,10 @@ void run_interface() {
             int ch = getch();
             if (ch == 'r' || ch == 'R') break;
             else if (ch == 's' || ch == 'S') {
-                FILE* f = fopen("confidence_result.txt", "w");
-                if (f) {
-                    fprintf(f, "Strategy: %s\nConfidence Score: %.2f%%\n", res.strategy, res.score);
-                    fclose(f);
-                    mvprintw(LINES / 2 + 4, (COLS - 30) / 2, "Result saved to confidence_result.txt");
-                    refresh();
-                    getch();
-                } else {
-                    mvprintw(LINES / 2 + 4, (COLS - 40) / 2, "Failed to save result to confidence_result.txt");
-                    refresh();
-                    getch();
-                }
+                save_result(&res);
+                mvprintw(LINES / 2 + 4, (COLS - 30) / 2, "Result saved to confidence_result.txt");
+                refresh();
+                getch();
             } else {
                 run_again = false;
                 break;
@@ -174,6 +188,7 @@ void run_interface() {
         }
     }
 
+    log_message("Application exited.");
     endwin();
 }
 
