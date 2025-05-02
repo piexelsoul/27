@@ -7,6 +7,13 @@ class WaveScore:
     WAVE1 = 10
     CORRECTIVE = 5
 
+LOG_FILE = "confidence_log.txt"
+RESULT_FILE = "confidence_result.txt"
+
+def log_message(message):
+    with open(LOG_FILE, "a") as log_file:
+        log_file.write(message + "\n")
+
 def get_wave_score(position):
     wave_scores = {
         "wave3": WaveScore.WAVE3,
@@ -29,7 +36,17 @@ def evaluate_confidence(wave_score, trend, macd, bb, vol, bb_touch, vol_at_bb, s
 
     return {"score": score, "strategy": strat}
 
+def save_result(result):
+    try:
+        with open(RESULT_FILE, "w") as f:
+            f.write(f"Strategy: {result['strategy']}\nConfidence Score: {result['score']}%\n")
+        log_message("Result saved successfully.")
+    except Exception as e:
+        log_message(f"Failed to save result: {str(e)}")
+        print("Error: Could not save the result.")
+
 def run_interface():
+    log_message("Application started.")
     while True:
         wave = input("Wave position (wave3/wave5/wavec/wave1/corrective): ").strip().lower()
         wave_score = get_wave_score(wave)
@@ -64,13 +81,10 @@ def run_interface():
             if action == 'r':
                 break
             elif action == 's':
-                try:
-                    with open("confidence_result.txt", "w") as f:
-                        f.write(f"Strategy: {res['strategy']}\nConfidence Score: {res['score']}%\n")
-                    print("Result saved to confidence_result.txt")
-                except Exception as e:
-                    print(f"Failed to save result to confidence_result.txt: {str(e)}")
+                save_result(res)
+                print("Result saved to confidence_result.txt")
             else:
+                log_message("Application exited.")
                 return
 
 if __name__ == "__main__":
