@@ -1,0 +1,92 @@
+//@version=5
+indicator("NeoWave Smart Zones by น้ำเพชร 💖", overlay=true)
+
+// =============================
+// 🌟 INPUT SETTINGS 🌟
+// =============================
+leftBars = input.int(5, "Left Bars", minval=1)
+rightBars = input.int(5, "Right Bars", minval=1)
+
+// =============================
+// 💫 SWING POINTS (จุดหักเห)
+// =============================
+swingHigh = ta.pivothigh(high, leftBars, rightBars)
+swingLow = ta.pivotlow(low, leftBars, rightBars)
+
+plotshape(swingHigh, style=shape.triangledown, color=color.orange, location=location.abovebar, size=size.tiny, title="Swing High")
+plotshape(swingLow, style=shape.triangleup, color=color.aqua, location=location.belowbar, size=size.tiny, title="Swing Low")
+
+// =============================
+// 🔀 BREAK OF STRUCTURE (BOS)
+// =============================
+var float lastHigh = na
+var float lastLow = na
+
+if not na(swingHigh)
+    lastHigh := high[rightBars]
+if not na(swingLow)
+    lastLow := low[rightBars]
+
+bosHigh = not na(lastHigh) and close > lastHigh
+bosLow = not na(lastLow) and close < lastLow
+
+plotshape(bosHigh, style=shape.arrowup, location=location.belowbar, color=color.blue, size=size.small, title="BOS Up")
+plotshape(bosLow, style=shape.arrowdown, location=location.abovebar, color=color.orange, size=size.small, title="BOS Down")
+
+// =============================
+// 🧲 LIQUIDITY GRAB
+// =============================
+liqGrabHigh = not na(lastHigh) and high > lastHigh and close < lastHigh
+liqGrabLow = not na(lastLow) and low < lastLow and close > lastLow
+
+plotshape(liqGrabHigh, style=shape.circle, location=location.abovebar, color=color.red, size=size.tiny, title="Liq Grab High")
+plotshape(liqGrabLow, style=shape.circle, location=location.belowbar, color=color.green, size=size.tiny, title="Liq Grab Low")
+
+// =============================
+// 🌀 FAIR VALUE GAP (FVG)
+// =============================
+fvgUp = bar_index > 2 and high[2] < low and high[1] < low
+fvgDown = bar_index > 2 and low[2] > high and low[1] > high
+
+fvgColorUp = color.new(color.aqua, 80)
+fvgColorDown = color.new(color.purple, 80)
+
+var fvgBoxes = array.new_box()
+
+if fvgUp
+    boxUp = box.new(bar_index[2], high[2], bar_index, low, border_color=color.aqua, bgcolor=fvgColorUp)
+    array.push(fvgBoxes, boxUp)
+
+if fvgDown
+    boxDown = box.new(bar_index[2], low[2], bar_index, high, border_color=color.purple, bgcolor=fvgColorDown)
+    array.push(fvgBoxes, boxDown)
+
+if array.size(fvgBoxes) > 20
+    oldBox = array.shift(fvgBoxes)
+    box.delete(oldBox)
+
+// =============================
+// 🏰 ORDER BLOCK (เบื้องต้น)
+// =============================
+orderBlockHigh = not na(swingHigh) and close[rightBars] < open[rightBars]
+orderBlockLow = not na(swingLow) and close[rightBars] > open[rightBars]
+
+plotshape(orderBlockHigh, style=shape.labeldown, location=location.abovebar, color=color.red, text="OB↑", title="Order Block High")
+plotshape(orderBlockLow, style=shape.labelup, location=location.belowbar, color=color.green, text="OB↓", title="Order Block Low")
+
+// =============================
+// 📏 DAILY PIVOT POINTS
+// =============================
+prevHigh = request.security(syminfo.tickerid, "D", high[1])
+prevLow = request.security(syminfo.tickerid, "D", low[1])
+prevClose = request.security(syminfo.tickerid, "D", close[1])
+
+pp = (prevHigh + prevLow + prevClose) / 3
+r1 = 2 * pp - prevLow
+s1 = 2 * pp - prevHigh
+
+plot(pp, title="Pivot", color=color.gray, linewidth=1, style=plot.style_line)
+plot(r1, title="R1", color=color.teal, linewidth=1, style=plot.style_line)
+plot(s1, title="S1", color=color.fuchsia, linewidth=1, style=plot.style_line)
+
+// 🎀 สคริปต์นี้เพื่อการศึกษาและความสวยงามค่ะ โดยน้ำเพชรตุ๊ดเทรดเด้อ 💕
