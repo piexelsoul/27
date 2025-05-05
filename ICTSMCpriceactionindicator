@@ -1,0 +1,68 @@
+//@version=5
+indicator("Combined ICT/SMC/PriceAction Indicator", overlay=true)
+
+// --- ICT/SMC + Price Action combined indicator ---
+
+// Detect Pivot Swing High/Low
+pivotLen = 5
+swingHigh = ta.pivothigh(high, pivotLen, pivotLen)
+swingLow  = ta.pivotlow(low,  pivotLen, pivotLen)
+plotshape(not na(swingHigh), style=shape.triangledown, location=location.abovebar, 
+     offset=-pivotLen, color=color.red,   title="Swing High")
+plotshape(not na(swingLow),  style=shape.triangleup,   location=location.belowbar, 
+     offset=-pivotLen, color=color.green, title="Swing Low")
+
+// Store last Swing levels
+var float lastSwingHigh = na
+var float lastSwingLow  = na
+if not na(swingHigh)
+    lastSwingHigh := swingHigh
+if not na(swingLow)
+    lastSwingLow := swingLow
+
+// Break of Structure (BOS)
+bullBOS = (lastSwingHigh != na and high > lastSwingHigh)
+bearBOS = (lastSwingLow  != na and low  < lastSwingLow)
+if bullBOS
+    lastSwingLow := na
+if bearBOS
+    lastSwingHigh := na
+plotshape(bullBOS, style=shape.arrowup,   location=location.belowbar, 
+     color=color.teal,  size=size.small, title="Bullish BOS")
+plotshape(bearBOS, style=shape.arrowdown, location=location.abovebar, 
+     color=color.orange, size=size.small, title="Bearish BOS")
+
+// Liquidity Grab (Sweep)
+bullLiqGrab = (lastSwingLow != na and low < lastSwingLow and close > lastSwingLow)
+bearLiqGrab = (lastSwingHigh != na and high > lastSwingHigh and close < lastSwingHigh)
+plotshape(bullLiqGrab, style=shape.circle, location=location.belowbar, 
+     color=color.green, size=size.tiny, title="Bullish Liquidity Grab")
+plotshape(bearLiqGrab, style=shape.circle, location=location.abovebar, 
+     color=color.red,   size=size.tiny, title="Bearish Liquidity Grab")
+
+// Fair Value Gap (3-candle imbalance)
+bullFVG = (high[2] < low)  // gap up
+bearFVG = (low[2]  > high) // gap down
+if bullFVG
+    box.new(bar_index-2, high[2], bar_index, low,
+            border_color=color.teal, bgcolor=color.teal, border_width=1, opacity=20)
+if bearFVG
+    box.new(bar_index-2, low[2],  bar_index, high,
+            border_color=color.purple, bgcolor=color.purple, border_width=1, opacity=20)
+
+// Mark Order Blocks (approx.)
+if not na(swingLow)
+    label.new(bar_index-pivotLen, swingLow, text="Bull OB", color=color.green, style=label.style_label_up, textcolor=color.white, size=size.small)
+if not na(swingHigh)
+    label.new(bar_index-pivotLen, swingHigh, text="Bear OB", color=color.red,   style=label.style_label_down, textcolor=color.white, size=size.small)
+
+// Daily Pivot Points (Previous day)
+dHigh  = request.security(syminfo.tickerid, "D", high[1])
+dLow   = request.security(syminfo.tickerid, "D", low[1])
+dClose = request.security(syminfo.tickerid, "D", close[1])
+pivotD = (dHigh + dLow + dClose) / 3
+r1 = 2*pivotD - dLow
+s1 = 2*pivotD - dHigh
+plot(pivotD, title="Daily Pivot", color=color.yellow,   linewidth=1)
+plot(r1,     title="R1",         color=color.orange,   linewidth=1, style=plot.style_dashed)
+plot(s1,     title="S1",         color=color.fuchsia,  linewidth=1, style=plot.style_dashed)
