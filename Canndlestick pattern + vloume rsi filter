@@ -1,0 +1,59 @@
+//@version=5
+indicator("ตุ๊ดเทรดเด้อขี้เซา 😴🐱s", overlay=true)
+
+// ==== INPUT SETTINGS ====
+useRSIFilter = input.bool(true, "ใช้ RSI Filter", inline="rsi")
+useVolFilter = input.bool(true, "ใช้ Volume Filter", inline="vol")
+rsiLen = input.int(14, "RSI Length")
+volLen = input.int(20, "Volume MA Length")
+
+// ==== RSI & Volume ====
+rsi = ta.rsi(close, rsiLen)
+volMA = ta.sma(volume, volLen)
+
+rsiBuy = rsi < 45
+rsiSell = rsi > 55
+volOk = volume > volMA * 0.8
+
+// ==== Candlestick Patterns ====
+
+// Hammer (กลับตัวขาขึ้น)
+hammer = close < open and (open - close) > 2 * (high - open) and (low < close)
+
+// Shooting Star (กลับตัวขาลง)
+shootingStar = close > open and (close - open) < 2 * (high - close) and (low < open)
+
+// Bullish Engulfing
+bullEngulf = close[1] < open[1] and close > open and close > open[1] and open < close[1]
+
+// Bearish Engulfing
+bearEngulf = close[1] > open[1] and close < open and close < open[1] and open > close[1]
+
+// Morning Star
+morningStar = close[2] < open[2] and math.abs(close[1] - open[1]) < (high[1] - low[1]) * 0.3 and close > (open[2] + close[2]) / 2
+
+// Evening Star
+eveningStar = close[2] > open[2] and math.abs(close[1] - open[1]) < (high[1] - low[1]) * 0.3 and close < (open[2] + close[2]) / 2
+
+// ==== Filter Logic ====
+buyConfirm = (not useRSIFilter or rsiBuy) and (not useVolFilter or volOk)
+sellConfirm = (not useRSIFilter or rsiSell) and (not useVolFilter or volOk)
+
+// ==== Plot Candlestick Signals ====
+plotshape(hammer and buyConfirm, title="Hammer", location=location.belowbar, style=shape.triangleup, color=color.lime, text="💚✅")
+plotshape(hammer and not buyConfirm, title="Hammer (No Confirm)", location=location.belowbar, style=shape.triangleup, color=color.lime, text="💚")
+
+plotshape(shootingStar and sellConfirm, title="Shooting Star", location=location.abovebar, style=shape.triangledown, color=color.red, text="💔✅")
+plotshape(shootingStar and not sellConfirm, title="Shooting Star (No Confirm)", location=location.abovebar, style=shape.triangledown, color=color.red, text="💔")
+
+plotshape(bullEngulf and buyConfirm, title="Bull Engulfing", location=location.belowbar, style=shape.labelup, color=color.green, text="↑✅")
+plotshape(bullEngulf and not buyConfirm, title="Bull Engulfing (No Confirm)", location=location.belowbar, style=shape.labelup, color=color.green, text="Bear↑")
+
+plotshape(bearEngulf and sellConfirm, title="Bear Engulfing", location=location.abovebar, style=shape.labeldown, color=color.orange, text="↓✅")
+plotshape(bearEngulf and not sellConfirm, title="Bear Engulfing (No Confirm)", location=location.abovebar, style=shape.labeldown, color=color.orange, text="↓")
+
+plotshape(morningStar and buyConfirm, title="Morning Star", location=location.belowbar, style=shape.xcross, color=color.green, text="🌅✅")
+plotshape(morningStar and not buyConfirm, title="Morning Star (No Confirm)", location=location.belowbar, style=shape.xcross, color=color.green, text="🌅")
+
+plotshape(eveningStar and sellConfirm, title="Evening Star", location=location.abovebar, style=shape.xcross, color=color.red, text="🌠✅")
+plotshape(eveningStar and not sellConfirm, title="Evening Star (No Confirm)", location=location.abovebar, style=shape.xcross, color=color.red, text="🌠")
