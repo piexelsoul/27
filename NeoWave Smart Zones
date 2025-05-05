@@ -27,8 +27,8 @@ if not na(swingHigh)
 if not na(swingLow)
     lastLow := low[rightBars]
 
-bosHigh = not na(lastHigh) and close > lastHigh
-bosLow = not na(lastLow) and close < lastLow
+bosHigh = not na(lastHigh) and close > lastHigh and close > ta.sma(close, 50)  // BOS + SMA 50 filter
+bosLow = not na(lastLow) and close < lastLow and close < ta.sma(close, 50)  // BOS + SMA 50 filter
 
 plotshape(bosHigh, style=shape.arrowup, location=location.belowbar, color=color.blue, size=size.small, title="BOS Up")
 plotshape(bosLow, style=shape.arrowdown, location=location.abovebar, color=color.orange, size=size.small, title="BOS Down")
@@ -36,8 +36,8 @@ plotshape(bosLow, style=shape.arrowdown, location=location.abovebar, color=color
 // =============================
 // 🧲 LIQUIDITY GRAB
 // =============================
-liqGrabHigh = not na(lastHigh) and high > lastHigh and close < lastHigh
-liqGrabLow = not na(lastLow) and low < lastLow and close > lastLow
+liqGrabHigh = not na(lastHigh) and high > lastHigh and close < lastHigh and high > ta.sma(high, 50)  // Liquidity Grab + SMA filter
+liqGrabLow = not na(lastLow) and low < lastLow and close > lastLow and low < ta.sma(low, 50)  // Liquidity Grab + SMA filter
 
 plotshape(liqGrabHigh, style=shape.circle, location=location.abovebar, color=color.red, size=size.tiny, title="Liq Grab High")
 plotshape(liqGrabLow, style=shape.circle, location=location.belowbar, color=color.green, size=size.tiny, title="Liq Grab Low")
